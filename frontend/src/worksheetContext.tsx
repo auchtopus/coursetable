@@ -10,7 +10,11 @@ import React, {
 } from 'react';
 import { useLocalStorageState, useSessionStorageState } from './browserStorage';
 import { Listing, useFerry } from './components/FerryProvider';
-import { toSeasonString } from './courseUtilities';
+import {
+  getOverallRatings,
+  getWorkloadRatings,
+  toSeasonString,
+} from './courseUtilities';
 // import { sortbyOptions } from './queries/Constants';
 import { useWorksheetInfo } from './queries/GetWorksheetListings';
 import { useUser, Worksheet } from './user';
@@ -19,6 +23,12 @@ import { OptType, Option, defaultFilters } from './searchContext';
 
 export type HiddenCourses = Record<number, boolean>;
 export type WorksheetView = Record<string, string>;
+export type AvgRatings = {
+  overall: number;
+  workload: number;
+  professor: number;
+};
+type AvgRatingsKeys = keyof AvgRatings;
 
 type Store = {
   season_codes: string[];
@@ -34,6 +44,7 @@ type Store = {
   worksheetError: string | null;
   worksheetData: Listing[];
   course_modal: (string | boolean | Listing)[];
+  avgRatings: AvgRatings;
   changeSeason: (season_code: Season) => void;
   handleFBPersonChange: (new_person: string) => void;
   setHoverCourse: React.Dispatch<React.SetStateAction<number | null>>;
@@ -83,6 +94,13 @@ export const WorksheetProvider: React.FC = ({ children }) => {
   ] = useSessionStorageState<WorksheetView>('worksheet_view', {
     view: 'calendar',
     mode: '',
+  });
+
+  // Average worksheet ratings
+  const [avgRatings, setAvgRatings] = useState<AvgRatings>({
+    overall: -1,
+    workload: -1,
+    professor: -1,
   });
 
   /* Processing */
@@ -191,6 +209,38 @@ export const WorksheetProvider: React.FC = ({ children }) => {
     sortByCourseCode,
   ]);
 
+  // Calculate avg ratings
+  useEffect(() => {
+    if (courses) {
+      const temp_avg_ratings: AvgRatings = {
+        overall: 0,
+        workload: 0,
+        professor: 0,
+      };
+      let n = 0;
+
+      courses.forEach((course) => {
+        if (hidden_courses[course.crn]) return;
+        temp_avg_ratings.overall += Number(
+          getOverallRatings(course) !== null ? getOverallRatings(course) : 0
+        );
+        temp_avg_ratings.workload += Number(
+          getWorkloadRatings(course) !== null ? getWorkloadRatings(course) : 0
+        );
+        temp_avg_ratings.professor += Number(
+          course.average_professor !== null ? course.average_professor : 0
+        );
+        n++;
+      });
+
+      for (const [key, value] of Object.entries(temp_avg_ratings)) {
+        temp_avg_ratings[key as AvgRatingsKeys] = value / n;
+      }
+
+      setAvgRatings(temp_avg_ratings);
+    }
+  }, [courses, hidden_courses]);
+
   /* Functions */
 
   // Hide/Show this course
@@ -268,6 +318,7 @@ export const WorksheetProvider: React.FC = ({ children }) => {
       worksheetError,
       worksheetData,
       course_modal,
+      avgRatings,
 
       // Update methods.
       changeSeason,
@@ -292,6 +343,7 @@ export const WorksheetProvider: React.FC = ({ children }) => {
       worksheetError,
       worksheetData,
       course_modal,
+      avgRatings,
       changeSeason,
       handleFBPersonChange,
       setHoverCourse,

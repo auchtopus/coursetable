@@ -6,6 +6,7 @@ import WorksheetCalendarListItem from './WorksheetCalendarListItem';
 import NoCourses from './NoCourses';
 import { useWorksheet } from '../worksheetContext';
 import { BsEyeSlash, BsEye } from 'react-icons/bs';
+import { ratingColormap, workloadColormap } from '../queries/Constants';
 
 // Space above row dropdown to hide scrolled courses
 const StyledSpacer = styled.div`
@@ -79,7 +80,13 @@ const CourseList = styled(SurfaceComponent)`
  */
 
 function WorksheetCalendarList() {
-  const { courses, cur_season, hidden_courses, toggleCourse } = useWorksheet();
+  const {
+    courses,
+    cur_season,
+    hidden_courses,
+    avgRatings,
+    toggleCourse,
+  } = useWorksheet();
 
   // Build the HTML for the list of courses of a given season
   const items = useMemo(() => {
@@ -107,10 +114,60 @@ function WorksheetCalendarList() {
 
   return (
     <>
-      {/* Hide/show toggle */}
+      {/* Top card */}
       <StyledSpacer className="pt-3">
         <StyledContainer layer={1} className="mx-1">
           <div className="shadow-sm p-2">
+            {/* Ratings Summary */}
+            <Row className="mx-auto pb-2">
+              <Col className="px-0 w-100 d-flex flex-column align-items-stretch">
+                <h5 className="text-center">Ratings Summary</h5>
+                <div className="d-flex justify-content-around flex-wrap">
+                  <div className="d-flex flex-column align-items-center">
+                    Avg Overall:
+                    <span
+                      style={{
+                        color: ratingColormap(avgRatings.overall)
+                          .darken()
+                          .saturate(),
+                      }}
+                    >
+                      {avgRatings.overall
+                        ? avgRatings.overall.toFixed(2)
+                        : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="d-flex flex-column align-items-center">
+                    Avg Workload:
+                    <span
+                      style={{
+                        color: workloadColormap(avgRatings.workload)
+                          .darken()
+                          .saturate(),
+                      }}
+                    >
+                      {avgRatings.workload
+                        ? avgRatings.workload.toFixed(2)
+                        : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="d-flex flex-column align-items-center">
+                    Avg Professor:
+                    <span
+                      style={{
+                        color: ratingColormap(avgRatings.professor)
+                          .darken()
+                          .saturate(),
+                      }}
+                    >
+                      {avgRatings.professor
+                        ? avgRatings.professor.toFixed(2)
+                        : 'N/A'}
+                    </span>
+                  </div>
+                </div>
+              </Col>
+            </Row>
             {/* Hide/Show All Button */}
             <Row className="mx-auto">
               <Col className="px-0 w-100">
