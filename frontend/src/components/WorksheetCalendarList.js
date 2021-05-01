@@ -6,7 +6,11 @@ import WorksheetCalendarListItem from './WorksheetCalendarListItem';
 import NoCourses from './NoCourses';
 import { useWorksheet } from '../worksheetContext';
 import { BsEyeSlash, BsEye } from 'react-icons/bs';
-import { ratingColormap, workloadColormap } from '../queries/Constants';
+import {
+  ratingColormap,
+  workloadColormap,
+  totalWorkloadColormap,
+} from '../queries/Constants';
 
 // Space above row dropdown to hide scrolled courses
 const StyledSpacer = styled.div`
@@ -84,6 +88,7 @@ function WorksheetCalendarList() {
     courses,
     cur_season,
     hidden_courses,
+    totalRatings,
     avgRatings,
     toggleCourse,
   } = useWorksheet();
@@ -127,9 +132,11 @@ function WorksheetCalendarList() {
                     Avg Overall:
                     <span
                       style={{
-                        color: ratingColormap(avgRatings.overall)
-                          .darken()
-                          .saturate(),
+                        color: avgRatings.overall
+                          ? ratingColormap(avgRatings.overall)
+                              .darken()
+                              .saturate()
+                          : '#cccccc',
                       }}
                     >
                       {avgRatings.overall
@@ -141,9 +148,11 @@ function WorksheetCalendarList() {
                     Avg Workload:
                     <span
                       style={{
-                        color: workloadColormap(avgRatings.workload)
-                          .darken()
-                          .saturate(),
+                        color: avgRatings.workload
+                          ? workloadColormap(avgRatings.workload)
+                              .darken()
+                              .saturate()
+                          : '#cccccc',
                       }}
                     >
                       {avgRatings.workload
@@ -155,13 +164,31 @@ function WorksheetCalendarList() {
                     Avg Professor:
                     <span
                       style={{
-                        color: ratingColormap(avgRatings.professor)
-                          .darken()
-                          .saturate(),
+                        color: avgRatings.professor
+                          ? ratingColormap(avgRatings.professor)
+                              .darken()
+                              .saturate()
+                          : '#cccccc',
                       }}
                     >
                       {avgRatings.professor
                         ? avgRatings.professor.toFixed(2)
+                        : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="d-flex flex-column align-items-center">
+                    Total Workload:
+                    <span
+                      style={{
+                        color: totalRatings.workload
+                          ? totalWorkloadColormap(totalRatings.workload)
+                              .darken()
+                              .saturate()
+                          : '#cccccc',
+                      }}
+                    >
+                      {totalRatings.workload
+                        ? totalRatings.workload.toFixed(2)
                         : 'N/A'}
                     </span>
                   </div>

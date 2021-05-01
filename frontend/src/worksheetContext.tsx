@@ -23,12 +23,10 @@ import { OptType, Option, defaultFilters } from './searchContext';
 
 export type HiddenCourses = Record<number, boolean>;
 export type WorksheetView = Record<string, string>;
-export type AvgRatings = {
-  overall: number;
-  workload: number;
-  professor: number;
-};
-type AvgRatingsKeys = keyof AvgRatings;
+
+const ratingsKeys = ['overall', 'workload', 'professor'] as const;
+type RatingsKeys = typeof ratingsKeys[number];
+export type Ratings = Record<RatingsKeys, number>;
 
 type Store = {
   season_codes: string[];
@@ -44,7 +42,8 @@ type Store = {
   worksheetError: string | null;
   worksheetData: Listing[];
   course_modal: (string | boolean | Listing)[];
-  avgRatings: AvgRatings;
+  totalRatings: Ratings;
+  avgRatings: Ratings;
   changeSeason: (season_code: Season) => void;
   handleFBPersonChange: (new_person: string) => void;
   setHoverCourse: React.Dispatch<React.SetStateAction<number | null>>;
@@ -97,7 +96,13 @@ export const WorksheetProvider: React.FC = ({ children }) => {
   });
 
   // Average worksheet ratings
-  const [avgRatings, setAvgRatings] = useState<AvgRatings>({
+  const [avgRatings, setAvgRatings] = useState<Ratings>({
+    overall: -1,
+    workload: -1,
+    professor: -1,
+  });
+  // Total worksheet ratings
+  const [totalRatings, setTotalRatings] = useState<Ratings>({
     overall: -1,
     workload: -1,
     professor: -1,
@@ -212,31 +217,50 @@ export const WorksheetProvider: React.FC = ({ children }) => {
   // Calculate avg ratings
   useEffect(() => {
     if (courses) {
-      const temp_avg_ratings: AvgRatings = {
+      const temp_total_ratings: Ratings = {
         overall: 0,
         workload: 0,
         professor: 0,
       };
-      let n = 0;
+      const temp_avg_ratings: Ratings = {
+        overall: 0,
+        workload: 0,
+        professor: 0,
+      };
+      const n: Ratings = {
+        overall: 0,
+        workload: 0,
+        professor: 0,
+      };
 
       courses.forEach((course) => {
         if (hidden_courses[course.crn]) return;
-        temp_avg_ratings.overall += Number(
-          getOverallRatings(course) !== null ? getOverallRatings(course) : 0
-        );
-        temp_avg_ratings.workload += Number(
-          getWorkloadRatings(course) !== null ? getWorkloadRatings(course) : 0
-        );
-        temp_avg_ratings.professor += Number(
-          course.average_professor !== null ? course.average_professor : 0
-        );
-        n++;
+
+        if (getOverallRatings(course) !== null) {
+          temp_total_ratings.overall += Number(getOverallRatings(course));
+          n.overall++;
+        } else {
+          temp_total_ratings.overall += 0;
+        }
+        if (getWorkloadRatings(course) !== null) {
+          temp_total_ratings.workload += Number(getWorkloadRatings(course));
+          n.workload++;
+        } else {
+          temp_total_ratings.workload += 0;
+        }
+        if (course.average_professor !== null) {
+          temp_total_ratings.professor += Number(course.average_professor);
+          n.professor++;
+        } else {
+          temp_total_ratings.professor += 0;
+        }
       });
 
-      for (const [key, value] of Object.entries(temp_avg_ratings)) {
-        temp_avg_ratings[key as AvgRatingsKeys] = value / n;
+      for (const [key, value] of Object.entries(temp_total_ratings)) {
+        temp_avg_ratings[key as RatingsKeys] = value / n[key as RatingsKeys];
       }
 
+      setTotalRatings(temp_total_ratings);
       setAvgRatings(temp_avg_ratings);
     }
   }, [courses, hidden_courses]);
@@ -318,6 +342,7 @@ export const WorksheetProvider: React.FC = ({ children }) => {
       worksheetError,
       worksheetData,
       course_modal,
+      totalRatings,
       avgRatings,
 
       // Update methods.
@@ -343,6 +368,7 @@ export const WorksheetProvider: React.FC = ({ children }) => {
       worksheetError,
       worksheetData,
       course_modal,
+      totalRatings,
       avgRatings,
       changeSeason,
       handleFBPersonChange,
