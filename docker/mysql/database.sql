@@ -65,21 +65,15 @@ CREATE TABLE `StudentFacebookFriends` (
 
 CREATE TABLE `StudentFriends` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `sender_netid` char(8) NOT NULL,
-  `receiver_netid` char(8) NOT NULL,
-  `status` enum('pending','confirmed','declined') NOT NULL,
+  `sender_netid` varchar(8) NOT NULL,
+  `receiver_netid` varchar(8) NOT NULL,
+  `status` enum('pending','confirmed','declined','canceled') NOT NULL,
   `sender_facebook_id` bigint(20) UNSIGNED DEFAULT NULL,
   `receiver_facebook_id` bigint(20) UNSIGNED DEFAULT NULL,
   `timestamp_requested` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `timestamp_updated` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
---
--- Dumping data for table `StudentFriends`
---
-
-INSERT INTO `StudentFriends` (`id`, `sender_netid`, `receiver_netid`, `status`, `sender_facebook_id`, `receiver_facebook_id`, `timestamp_requested`, `timestamp_updated`) VALUES
-(1, 'ach88', 'bmw49', 'pending', NULL, NULL, '2021-11-13 19:56:53', NULL);
 
 -- --------------------------------------------------------
 
