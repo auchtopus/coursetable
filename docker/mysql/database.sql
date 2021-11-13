@@ -3,8 +3,8 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: mysql
--- Generation Time: Aug 28, 2021 at 12:38 AM
--- Server version: 10.6.4-MariaDB-1:10.6.4+maria~focal
+-- Generation Time: Nov 13, 2021 at 08:27 PM
+-- Server version: 10.6.5-MariaDB-1:10.6.5+maria~focal
 -- PHP Version: 7.4.20
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
@@ -60,6 +60,30 @@ CREATE TABLE `StudentFacebookFriends` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `StudentFriends`
+--
+
+CREATE TABLE `StudentFriends` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `sender_netid` char(8) NOT NULL,
+  `receiver_netid` char(8) NOT NULL,
+  `status` enum('pending','confirmed','declined') NOT NULL,
+  `sender_facebook_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `receiver_facebook_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `timestamp_requested` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `timestamp_updated` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+--
+-- Dumping data for table `StudentFriends`
+--
+
+INSERT INTO `StudentFriends` (`id`, `sender_netid`, `receiver_netid`, `status`, `sender_facebook_id`, `receiver_facebook_id`, `timestamp_requested`, `timestamp_updated`) VALUES
+(1, 'ach88', 'bmw49', 'pending', NULL, NULL, '2021-11-13 19:56:53', NULL);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `Students`
 --
 
@@ -101,6 +125,12 @@ ALTER TABLE `StudentFacebookFriends`
   ADD KEY `netId` (`netId`);
 
 --
+-- Indexes for table `StudentFriends`
+--
+ALTER TABLE `StudentFriends`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `Students`
 --
 ALTER TABLE `Students`
@@ -124,6 +154,12 @@ ALTER TABLE `WorksheetCourses`
 --
 ALTER TABLE `StudentFacebookFriends`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=59251421;
+
+--
+-- AUTO_INCREMENT for table `StudentFriends`
+--
+ALTER TABLE `StudentFriends`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `WorksheetCourses`

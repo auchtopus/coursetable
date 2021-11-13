@@ -50,3 +50,23 @@ model WorksheetCourses {
   @@unique([net_id, oci_id, season], name: "net_id_oci_id_season")
   @@index([net_id], name: "net_id")
 }
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model StudentFriends {
+  id                   BigInt                @id @default(autoincrement()) @db.UnsignedBigInt
+  sender_netid         String                @db.Char(8)
+  receiver_netid       String                @db.Char(8)
+  status               StudentFriends_status
+  sender_facebook_id   BigInt?               @db.UnsignedBigInt
+  receiver_facebook_id BigInt?               @db.UnsignedBigInt
+  timestamp_requested  DateTime              @default(now()) @db.Timestamp(0)
+  timestamp_updated    DateTime?             @db.Timestamp(0)
+
+  @@ignore
+}
+
+enum StudentFriends_status {
+  pending
+  confirmed
+  declined
+}
