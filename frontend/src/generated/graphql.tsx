@@ -10038,7 +10038,7 @@ export type SearchEvaluationNarrativesQueryVariables = Exact<{
 }>;
 
 
-export type SearchEvaluationNarrativesQuery = { __typename?: 'query_root', computed_listing_info: Array<{ __typename?: 'computed_listing_info', crn: number, course: { __typename?: 'courses', evaluation_narratives_aggregate: { __typename?: 'evaluation_narratives_aggregate', nodes: Array<{ __typename?: 'evaluation_narratives', comment: Maybe<string>, evaluation_question: { __typename?: 'evaluation_questions', question_text: Maybe<string> } }> }, evaluation_ratings: Array<{ __typename?: 'evaluation_ratings', rating: Maybe<any>, evaluation_question: { __typename?: 'evaluation_questions', question_text: Maybe<string> } }> } }> };
+export type SearchEvaluationNarrativesQuery = { __typename?: 'query_root', computed_listing_info: Array<{ __typename?: 'computed_listing_info', crn: number, course: { __typename?: 'courses', evaluation_narratives_aggregate: { __typename?: 'evaluation_narratives_aggregate', nodes: Array<{ __typename?: 'evaluation_narratives', comment: Maybe<string>, comment_neg: Maybe<number>, comment_neu: Maybe<number>, comment_pos: Maybe<number>, comment_compound: Maybe<number>, evaluation_question: { __typename?: 'evaluation_questions', question_text: Maybe<string> } }> }, evaluation_ratings: Array<{ __typename?: 'evaluation_ratings', rating: Maybe<any>, evaluation_question: { __typename?: 'evaluation_questions', question_text: Maybe<string> } }> } }> };
 
 export type CatalogBySeasonQueryVariables = Exact<{
   season: Scalars['String'];
@@ -10136,6 +10136,10 @@ export const SearchEvaluationNarrativesDocument = gql`
       evaluation_narratives_aggregate {
         nodes {
           comment
+          comment_neg
+          comment_neu
+          comment_pos
+          comment_compound
           evaluation_question {
             question_text
           }

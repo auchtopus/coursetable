@@ -71,6 +71,10 @@ query SearchEvaluationNarratives($season_code: String, $course_code: String) {
       evaluation_narratives_aggregate {
         nodes {
           comment
+          comment_neg
+          comment_neu
+          comment_pos
+          comment_compound
           evaluation_question {
             question_text
           }

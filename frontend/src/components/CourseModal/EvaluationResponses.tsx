@@ -76,6 +76,8 @@ const EvaluationResponses: React.FC<{
     return responses;
   }, []);
 
+  console.log(info);
+
   // Dictionary that holds the comments for each question
   const [responses, sorted_responses] = useMemo(() => {
     const temp_responses: { [key: string]: string[] } = {};
