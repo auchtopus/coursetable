@@ -76,11 +76,28 @@ const EvaluationResponses: React.FC<{
     return responses;
   }, []);
 
-  console.log(info);
+  // sort responses by the compound sentiment score
+  const sortByPositivity = useCallback((responses, pos_scores) => {
+    for (const key in responses) {
+      const combined = [];
+      for (let i = 0; i < responses[key].length; i++)
+        combined.push({
+          comment: responses[key][i],
+          comment_compound: pos_scores[key][i],
+        });
+      combined.sort(function (a, b) {
+        return b.comment_compound - a.comment_compound;
+      });
+      for (let i = 0; i < responses[key].length; i++)
+        responses[key][i] = combined[i].comment;
+    }
+    return responses;
+  }, []);
 
   // Dictionary that holds the comments for each question
-  const [responses, sorted_responses] = useMemo(() => {
+  const [responses, sorted_responses, pos_sorted_responses] = useMemo(() => {
     const temp_responses: { [key: string]: string[] } = {};
+    const pos_scores: { [key: string]: number[] } = {};
     // Loop through each section for this course code
     (info || []).forEach((section) => {
       const crn_code = section.crn;
@@ -89,22 +106,30 @@ const EvaluationResponses: React.FC<{
       const { nodes } = section.course.evaluation_narratives_aggregate;
       // Return if no comments
       if (!nodes.length) return;
-      // Add comments to responses dictionary
+      // Add comments to responses and sentiments dictionary
       nodes.forEach((node) => {
         if (node.evaluation_question.question_text && node.comment) {
-          if (!temp_responses[node.evaluation_question.question_text])
+          if (!temp_responses[node.evaluation_question.question_text]) {
             temp_responses[node.evaluation_question.question_text] = [];
+            pos_scores[node.evaluation_question.question_text] = [];
+          }
           temp_responses[node.evaluation_question.question_text].push(
             node.comment
+          );
+          pos_scores[node.evaluation_question.question_text].push(
+            node.comment_compound as number
           );
         }
       });
     });
     return [
       temp_responses,
-      sortByLength(JSON.parse(JSON.stringify(temp_responses))), // Deep copy temp_responses and sort it
+      // Deep copy temp_responses and sort by length
+      sortByLength(JSON.parse(JSON.stringify(temp_responses))),
+      // Deep copy temp_responses and sort by positivity
+      sortByPositivity(JSON.parse(JSON.stringify(temp_responses)), pos_scores),
     ];
-  }, [info, crn, sortByLength]);
+  }, [info, crn, sortByLength, sortByPositivity]);
 
   // Number of questions
   const num_questions = Object.keys(responses).length;
@@ -118,8 +143,17 @@ const EvaluationResponses: React.FC<{
     let temp_skills = [];
     let temp_strengths = [];
     let temp_summary = [];
-    const cur_responses =
-      sort_order === 'length' ? sorted_responses : responses;
+    let cur_responses;
+    switch (sort_order) {
+      case 'length':
+        cur_responses = sorted_responses;
+        break;
+      case 'positivity':
+        cur_responses = pos_sorted_responses;
+        break;
+      default:
+        cur_responses = responses;
+    }
     // Populate the lists above
     const genTemp = (resps: any) => {
       if (resps.length === 0) {
@@ -157,7 +191,7 @@ const EvaluationResponses: React.FC<{
       }
     }
     return [temp_recommend, temp_skills, temp_strengths, temp_summary];
-  }, [responses, sort_order, sorted_responses, filter]);
+  }, [responses, sort_order, sorted_responses, pos_sorted_responses, filter]);
 
   const context = document.querySelectorAll('.responses');
   const instance = new Mark(context);
@@ -195,6 +229,13 @@ const EvaluationResponses: React.FC<{
             onClick={() => setSortOrder('length')}
           >
             length
+          </StyledSortOption>
+          <StyledSortOption
+            // @ts-ignore
+            active={sort_order === 'positivity'}
+            onClick={() => setSortOrder('positivity')}
+          >
+            positivity
           </StyledSortOption>
         </div>
       </Row>
