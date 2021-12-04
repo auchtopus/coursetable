@@ -66,7 +66,7 @@ const EvaluationResponses: React.FC<{
   info?: SearchEvaluationNarrativesQuery['computed_listing_info'];
 }> = ({ crn, info }) => {
   // Sort by what order?
-  const [sort_order, setSortOrder] = useState('original');
+  const [sort_order, setSortOrder] = useState('length');
 
   const sortByLength = useCallback((responses) => {
     for (const key in responses) {
@@ -159,9 +159,6 @@ const EvaluationResponses: React.FC<{
     let temp_summary = [];
     let cur_responses;
     switch (sort_order) {
-      case 'length':
-        cur_responses = sorted_responses;
-        break;
       case 'positivity':
         cur_responses = pos_sorted_responses;
         break;
@@ -169,7 +166,7 @@ const EvaluationResponses: React.FC<{
         cur_responses = neg_sorted_responses;
         break;
       default:
-        cur_responses = responses;
+        cur_responses = sorted_responses;
     }
     // Populate the lists above
     const genTemp = (resps: any) => {
@@ -209,7 +206,6 @@ const EvaluationResponses: React.FC<{
     }
     return [temp_recommend, temp_skills, temp_strengths, temp_summary];
   }, [
-    responses,
     sort_order,
     sorted_responses,
     pos_sorted_responses,
@@ -240,13 +236,6 @@ const EvaluationResponses: React.FC<{
       <Row className={`${styles.sort_by} mx-auto mb-2 justify-content-center`}>
         <span className="font-weight-bold my-auto mr-2">Sort comments by:</span>
         <div className={styles.sort_options}>
-          <StyledSortOption
-            // @ts-ignore
-            active={sort_order === 'original'}
-            onClick={() => setSortOrder('original')}
-          >
-            original order
-          </StyledSortOption>
           <StyledSortOption
             // @ts-ignore
             active={sort_order === 'length'}
