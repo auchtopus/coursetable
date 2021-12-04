@@ -5,6 +5,7 @@ import styles from './EvaluationResponses.module.css';
 import { StyledInput, TextComponent } from '../StyledComponents';
 import { SearchEvaluationNarrativesQuery } from '../../generated/graphql';
 import Mark from 'mark.js';
+import { concatAST } from 'graphql';
 
 // Tabs of evaluation comments in modal
 const StyledTabs = styled(Tabs)`
@@ -64,7 +65,7 @@ const EvaluationResponses: React.FC<{
   crn: number;
   info?: SearchEvaluationNarrativesQuery['computed_listing_info'];
 }> = ({ crn, info }) => {
-  // Sort by original order or length?
+  // Sort by what order?
   const [sort_order, setSortOrder] = useState('original');
 
   const sortByLength = useCallback((responses) => {
@@ -78,6 +79,7 @@ const EvaluationResponses: React.FC<{
 
   // sort responses by the compound sentiment score
   const sortByPositivity = useCallback((responses, pos_scores) => {
+    const neg_responses = JSON.parse(JSON.stringify(responses));
     for (const key in responses) {
       const combined = [];
       for (let i = 0; i < responses[key].length; i++)
@@ -88,14 +90,21 @@ const EvaluationResponses: React.FC<{
       combined.sort(function (a, b) {
         return b.comment_compound - a.comment_compound;
       });
-      for (let i = 0; i < responses[key].length; i++)
+      for (let i = 0; i < responses[key].length; i++) {
         responses[key][i] = combined[i].comment;
+        neg_responses[key][i] = combined[responses[key].length - 1 - i].comment;
+      }
     }
-    return responses;
+    return [responses, neg_responses];
   }, []);
 
   // Dictionary that holds the comments for each question
-  const [responses, sorted_responses, pos_sorted_responses] = useMemo(() => {
+  const [
+    responses,
+    sorted_responses,
+    pos_sorted_responses,
+    neg_sorted_responses,
+  ] = useMemo(() => {
     const temp_responses: { [key: string]: string[] } = {};
     const pos_scores: { [key: string]: number[] } = {};
     // Loop through each section for this course code
@@ -122,12 +131,17 @@ const EvaluationResponses: React.FC<{
         }
       });
     });
+    const [pos_responses, neg_responses] = sortByPositivity(
+      JSON.parse(JSON.stringify(temp_responses)),
+      pos_scores
+    );
     return [
       temp_responses,
       // Deep copy temp_responses and sort by length
       sortByLength(JSON.parse(JSON.stringify(temp_responses))),
-      // Deep copy temp_responses and sort by positivity
-      sortByPositivity(JSON.parse(JSON.stringify(temp_responses)), pos_scores),
+      // Deep copy temp_responses and sort by sentiment
+      pos_responses,
+      neg_responses,
     ];
   }, [info, crn, sortByLength, sortByPositivity]);
 
@@ -150,6 +164,9 @@ const EvaluationResponses: React.FC<{
         break;
       case 'positivity':
         cur_responses = pos_sorted_responses;
+        break;
+      case 'negativity':
+        cur_responses = neg_sorted_responses;
         break;
       default:
         cur_responses = responses;
@@ -191,7 +208,14 @@ const EvaluationResponses: React.FC<{
       }
     }
     return [temp_recommend, temp_skills, temp_strengths, temp_summary];
-  }, [responses, sort_order, sorted_responses, pos_sorted_responses, filter]);
+  }, [
+    responses,
+    sort_order,
+    sorted_responses,
+    pos_sorted_responses,
+    neg_sorted_responses,
+    filter,
+  ]);
 
   const context = document.querySelectorAll('.responses');
   const instance = new Mark(context);
@@ -236,6 +260,13 @@ const EvaluationResponses: React.FC<{
             onClick={() => setSortOrder('positivity')}
           >
             positivity
+          </StyledSortOption>
+          <StyledSortOption
+            // @ts-ignore
+            active={sort_order === 'negativity'}
+            onClick={() => setSortOrder('negativity')}
+          >
+            negativity
           </StyledSortOption>
         </div>
       </Row>
