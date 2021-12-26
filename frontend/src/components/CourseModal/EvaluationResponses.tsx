@@ -5,7 +5,11 @@ import styles from './EvaluationResponses.module.css';
 import { StyledInput, TextComponent } from '../StyledComponents';
 import { SearchEvaluationNarrativesQuery } from '../../generated/graphql';
 import Mark from 'mark.js';
-import { concatAST } from 'graphql';
+import chroma from 'chroma-js';
+
+const positivityColormap = chroma
+  .scale(['#f54242', '#f5f542', '#00E800'])
+  .domain([-1, 1]);
 
 // Tabs of evaluation comments in modal
 const StyledTabs = styled(Tabs)`
@@ -28,10 +32,14 @@ const StyledTabs = styled(Tabs)`
 `;
 
 // Row for each comment
-const StyledCommentRow = styled(Row)`
+const StyledCommentRow = styled(Row)<{
+  compound: number;
+  colormap: chroma.Scale<chroma.Color>;
+}>`
   font-size: 14px;
   font-weight: 450;
   border-bottom: 1px solid ${({ theme }) => theme.multivalue};
+  border-left: 3px solid ${({ compound, colormap }) => colormap(compound).css()};
 `;
 
 // Bubble to choose sort order
@@ -80,21 +88,37 @@ const EvaluationResponses: React.FC<{
   // sort responses by the compound sentiment score
   const sortByPositivity = useCallback((responses, pos_scores) => {
     const neg_responses = JSON.parse(JSON.stringify(responses));
+    // for (const key in responses) {
+    //   const combined = [];
+    //   for (let i = 0; i < responses[key].length; i++)
+    //     combined.push({
+    //       comment: responses[key][i],
+    //       comment_compound: pos_scores[key][i],
+    //     });
+    //   combined.sort(function (a, b) {
+    //     return b.comment_compound - a.comment_compound;
+    //   });
+    //   for (let i = 0; i < responses[key].length; i++) {
+    //     responses[key][i] = combined[i].comment;
+    //     neg_responses[key][i] = combined[responses[key].length - 1 - i].comment;
+    //   }
+    // }
     for (const key in responses) {
-      const combined = [];
-      for (let i = 0; i < responses[key].length; i++)
-        combined.push({
-          comment: responses[key][i],
-          comment_compound: pos_scores[key][i],
-        });
-      combined.sort(function (a, b) {
+      responses[key].sort(function (
+        a: { comment_compound: number },
+        b: { comment_compound: number }
+      ) {
         return b.comment_compound - a.comment_compound;
       });
       for (let i = 0; i < responses[key].length; i++) {
-        responses[key][i] = combined[i].comment;
-        neg_responses[key][i] = combined[responses[key].length - 1 - i].comment;
+        neg_responses[key][i] = {
+          comment: responses[key][responses[key].length - 1 - i].comment,
+          comment_compound:
+            responses[key][responses[key].length - 1 - i].comment_compound,
+        };
       }
     }
+    console.log('negative', neg_responses);
     return [responses, neg_responses];
   }, []);
 
@@ -105,7 +129,9 @@ const EvaluationResponses: React.FC<{
     pos_sorted_responses,
     neg_sorted_responses,
   ] = useMemo(() => {
-    const temp_responses: { [key: string]: string[] } = {};
+    const temp_responses: {
+      [key: string]: { comment: string; comment_compound: number }[];
+    } = {};
     const pos_scores: { [key: string]: number[] } = {};
     // Loop through each section for this course code
     (info || []).forEach((section) => {
@@ -122,9 +148,10 @@ const EvaluationResponses: React.FC<{
             temp_responses[node.evaluation_question.question_text] = [];
             pos_scores[node.evaluation_question.question_text] = [];
           }
-          temp_responses[node.evaluation_question.question_text].push(
-            node.comment
-          );
+          temp_responses[node.evaluation_question.question_text].push({
+            comment: node.comment,
+            comment_compound: node.comment_compound as number,
+          });
           pos_scores[node.evaluation_question.question_text].push(
             node.comment_compound as number
           );
@@ -174,16 +201,31 @@ const EvaluationResponses: React.FC<{
         return resps;
       }
       const filteredResps = resps
-        .filter((response: string, index: number) => {
-          return response.toLowerCase().includes(filter.toLowerCase());
-        })
-        .map((response: string, index: number) => {
-          return (
-            <StyledCommentRow key={index} className="m-auto p-2 responses">
-              <TextComponent type={1}>{response}</TextComponent>
+        .filter(
+          (
+            response: { comment: string; comment_compound: number },
+            index: number
+          ) => {
+            return response.comment
+              .toLowerCase()
+              .includes(filter.toLowerCase());
+          }
+        )
+        .map(
+          (
+            response: { comment: string; comment_compound: number },
+            index: number
+          ) => (
+            <StyledCommentRow
+              key={index}
+              className="m-auto p-2 responses"
+              colormap={positivityColormap}
+              compound={response.comment_compound}
+            >
+              <TextComponent type={1}>{response.comment}</TextComponent>
             </StyledCommentRow>
-          );
-        });
+          )
+        );
       if (filteredResps.length === 0) {
         return [
           <StyledCommentRow key={0} className="m-auto p-2">
