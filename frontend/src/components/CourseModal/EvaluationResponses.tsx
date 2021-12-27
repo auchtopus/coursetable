@@ -7,6 +7,7 @@ import { SearchEvaluationNarrativesQuery } from '../../generated/graphql';
 import Mark from 'mark.js';
 import chroma from 'chroma-js';
 
+// Color gradient for evaluation sentiment scores
 const positivityColormap = chroma
   .scale(['#f54242', '#f5f542', '#00E800'])
   .domain([-1, 1]);
@@ -86,23 +87,8 @@ const EvaluationResponses: React.FC<{
   }, []);
 
   // sort responses by the compound sentiment score
-  const sortByPositivity = useCallback((responses, pos_scores) => {
+  const sortByPositivity = useCallback((responses) => {
     const neg_responses = JSON.parse(JSON.stringify(responses));
-    // for (const key in responses) {
-    //   const combined = [];
-    //   for (let i = 0; i < responses[key].length; i++)
-    //     combined.push({
-    //       comment: responses[key][i],
-    //       comment_compound: pos_scores[key][i],
-    //     });
-    //   combined.sort(function (a, b) {
-    //     return b.comment_compound - a.comment_compound;
-    //   });
-    //   for (let i = 0; i < responses[key].length; i++) {
-    //     responses[key][i] = combined[i].comment;
-    //     neg_responses[key][i] = combined[responses[key].length - 1 - i].comment;
-    //   }
-    // }
     for (const key in responses) {
       responses[key].sort(function (
         a: { comment_compound: number },
@@ -118,7 +104,6 @@ const EvaluationResponses: React.FC<{
         };
       }
     }
-    console.log('negative', neg_responses);
     return [responses, neg_responses];
   }, []);
 
@@ -132,7 +117,6 @@ const EvaluationResponses: React.FC<{
     const temp_responses: {
       [key: string]: { comment: string; comment_compound: number }[];
     } = {};
-    const pos_scores: { [key: string]: number[] } = {};
     // Loop through each section for this course code
     (info || []).forEach((section) => {
       const crn_code = section.crn;
@@ -146,21 +130,16 @@ const EvaluationResponses: React.FC<{
         if (node.evaluation_question.question_text && node.comment) {
           if (!temp_responses[node.evaluation_question.question_text]) {
             temp_responses[node.evaluation_question.question_text] = [];
-            pos_scores[node.evaluation_question.question_text] = [];
           }
           temp_responses[node.evaluation_question.question_text].push({
             comment: node.comment,
             comment_compound: node.comment_compound as number,
           });
-          pos_scores[node.evaluation_question.question_text].push(
-            node.comment_compound as number
-          );
         }
       });
     });
     const [pos_responses, neg_responses] = sortByPositivity(
-      JSON.parse(JSON.stringify(temp_responses)),
-      pos_scores
+      JSON.parse(JSON.stringify(temp_responses))
     );
     return [
       temp_responses,
